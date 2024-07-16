@@ -1,0 +1,433 @@
+
+<!-- 
+=================================================================
+ src/js/CodeEditHelp.html
+=================================================================
+//-->
+
+<!-- 
+<html>   
+    <input id="edDptCode">
+    <input id="edDptName">
+    <button id="btnDptSearch">...</button>
+    <hr>
+    <input id="edRoleCode">
+    <input id="edRoleName">
+    <button id="btnRoleSearch">...</button>
+</html>   
+<script>
+    callback = function(data){
+                console.log(data)
+            }
+    let args = {codeTagId : "edDptCode", nameTagId : "edDptName", buttonTagId : "btnDptSearch", codeType : "DPT", callback:callback}
+    CODE_HELP_EDIT.set( args)
+
+    args = {codeTagId : "edRoleCode", nameTagId : "edRoleName", buttonTagId : "btnRoleSearch", codeType : "ROLE", callback:callback}
+    CODE_HELP_EDIT.set( args)
+</script>
+ -->
+<script src="https://cdn.jsdelivr.net/npm/ag-grid-community/dist/ag-grid-community.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@32.0.2/styles/ag-theme-quartz.css" />
+<dialog id="dlgCodeEditHelp">
+    <div class="modalBackground">
+        <div class="modalBody">
+            <div class="modalSystemMenu">
+                <span class="systemButton" id="btnClose_dlgCodeEditHelp" > x </span>
+            </div>
+            <h3 id="title_dlgCodeEditHelp" class="modalTitle">{{ title }} 목록</h3>
+            <div id="cntrCodedList_dlgCodeEditHelp" class="ag-theme-balham-auto-dark *" style="width:300px;height: 300px">
+            </div>
+            <div class="modalButtonGroup">
+                <button
+                    id="btnOk_dlgCodeEditHelp"
+                    disabled
+                >
+                    OK
+                </button>
+                <button 
+                    id="btnCancel_dlgCodeEditHelp"
+                    >
+                    CANCEL
+                </button>
+            </div>
+        </div>
+    </div>
+</dialog>
+<script>
+const CODE_HELP_EDIT = {
+    API    : {},
+    
+    DIALOG : {
+        TAGS   : {
+            dialog      : document.getElementById('dlgCodeEditHelp'),
+            title       : document.getElementById('title_dlgCodeEditHelp'),
+            container   : document.getElementById('cntrCodedList_dlgCodeEditHelp'),
+            modal       : document.getElementById('dlgCodeEditHelp'),
+            btnOk       : document.getElementById('btnOk_dlgCodeEditHelp'),
+            btnCancel   : document.getElementById('btnCancel_dlgCodeEditHelp'),
+            btnClose    : document.getElementById('btnClose_dlgCodeEditHelp'),
+            grid        : null,
+        },
+
+        open : async function({codeList, title}){
+            result = null
+            CODE_HELP_EDIT.DIALOG.GRID.create(codeList)
+            CODE_HELP_EDIT.DIALOG.TITLE.set(title)
+            const promise = new Promise(
+                function(resolve, reject){
+                    CODE_HELP_EDIT.DIALOG.TAGS.modal.show()
+                    CODE_HELP_EDIT.DIALOG.TAGS.grid.addEventListener('rowDoubleClicked', (event)=>{
+                        const result = {
+                            button : 'OK',
+                            data : event.data
+                        }
+                        CODE_HELP_EDIT.DIALOG.TAGS.grid.destroy()
+                        CODE_HELP_EDIT.DIALOG.TAGS.grid = null
+                        CODE_HELP_EDIT.DIALOG.TAGS.dialog.close()
+                        resolve(result)
+                    })
+                    CODE_HELP_EDIT.DIALOG.TAGS.btnOk.addEventListener('click', (event)=>{
+                        const result = {
+                            button : 'OK',
+                            data : CODE_HELP_EDIT.DIALOG.GRID.getSelectedData()
+                        }
+                        CODE_HELP_EDIT.DIALOG.TAGS.grid.destroy()
+                        CODE_HELP_EDIT.DIALOG.TAGS.grid = null
+                        CODE_HELP_EDIT.DIALOG.TAGS.dialog.close()
+                        resolve(result)
+                    })
+                    CODE_HELP_EDIT.DIALOG.TAGS.btnCancel.addEventListener('click', (event)=>{
+                        const result = {
+                            button : 'CANCEL',
+                            data : CODE_HELP_EDIT.DIALOG.GRID.getSelectedData()
+                        }
+                        CODE_HELP_EDIT.DIALOG.TAGS.grid.destroy()
+                        CODE_HELP_EDIT.DIALOG.TAGS.grid = null
+                        CODE_HELP_EDIT.DIALOG.TAGS.dialog.close()
+                        resolve(result)
+                    })
+                    CODE_HELP_EDIT.DIALOG.TAGS.btnClose.addEventListener('click', (event)=>{
+                        const result = {
+                            button : 'CLOSE',
+                            data : CODE_HELP_EDIT.DIALOG.GRID.getSelectedData()
+                        }
+                        CODE_HELP_EDIT.DIALOG.TAGS.grid.destroy()
+                        CODE_HELP_EDIT.DIALOG.TAGS.grid = null
+                        CODE_HELP_EDIT.DIALOG.TAGS.dialog.close()
+                        resolve(result)
+                    })
+                }
+            )
+
+            result = await promise.then(function(data){
+                return data
+            })
+            return result
+        },
+
+        TITLE : {
+            set : function(title){
+                CODE_HELP_EDIT.DIALOG.TAGS.title.textContent = title
+            },
+        },
+
+        GRID : {
+            create : function(codeList){
+                const gridOptions = {
+                    rowData: codeList,
+                    columnDefs: [{ field: "seq"  , flex: 1, },{ field: "code" , flex: 1, },{ field: "name" , flex: 1, },],
+                    rowSelection:"single",
+                    onRowSelected: CODE_HELP_EDIT.DIALOG.GRID.onRowSelected,
+                };
+                CODE_HELP_EDIT.DIALOG.TAGS.grid = agGrid.createGrid(CODE_HELP_EDIT.DIALOG.TAGS.container, gridOptions);
+            },
+            onRowSelected : function(){
+                CODE_HELP_EDIT.DIALOG.TAGS.btnOk.disabled = true
+                const selectedRows = CODE_HELP_EDIT.DIALOG.TAGS.grid.getSelectedRows()
+                if(selectedRows.length > 0){
+                    CODE_HELP_EDIT.DIALOG.TAGS.btnOk.disabled = false
+                }
+            },
+            getSelectedData : function(){
+                const result = CODE_HELP_EDIT.DIALOG.TAGS.grid.getSelectedRows()
+                return result
+            },
+        },
+        BUTTON_GROUP : {
+        },
+    },
+
+    DATA : {
+
+        CODE_TYPES : {
+            DPT : {
+                URL : '',
+                codeLength : 4,
+            },
+            ROLE : {
+                URL : '',
+                codeLength : 4,
+            },
+        },
+
+    },
+    
+    METHOD : {
+        
+        getCodeList(codeType){
+            // TEMP_CODE_LIST : 임시 코드 목록
+            const TEMP_CODE_LIST = {
+                DPT : [{ code: 'd001', name: '관리부' },{ code: 'd002', name: '영업부' },{ code: 'd003', name: '개발부' },],
+                ROLE : [{ code: 'r001', name: '사원' },{ code: 'r002', name: '관리자' },{ code: 'r003', name: '책임자' },],
+            }
+            const result = TEMP_CODE_LIST[codeType]
+            return result
+        },
+
+        addSeq(codeList){
+            const list = JSON.parse(JSON.stringify(codeList))
+            let result = []
+            for(const idx in list){
+                let ele = list[idx]
+                if(!ele.seq){
+                    ele.seq = idx
+                }
+                if(!ele.codeName){
+                    ele.codeName = ''.concat(`[ ${ele.code} ] ${ele.name}`)
+                }
+                result.push(ele)
+            }
+            return result
+        },
+
+        fileterCode(codeList, code){
+            const list = CODE_HELP_EDIT.METHOD.addSeq(codeList)
+            const result = list.filter((ele)=>{
+                var value1	= ele.code.toUpperCase();
+                var value2	= code.toUpperCase();
+                var pos		= value1.indexOf(value2);
+                return pos >= 0
+            })
+            if(result.length < 1){
+                return list
+            }
+            return result
+        },
+
+        fileterName(codeList, name){
+            const list = CODE_HELP_EDIT.METHOD.addSeq(codeList)
+            const result = list.filter((ele)=>{
+                var value1	= ele.name.toUpperCase();
+                var value2	= name.toUpperCase();
+                var pos		= value1.indexOf(value2);
+                return pos >= 0
+            })
+            if(result.length < 1){
+                return list
+            }
+            return result
+        },
+
+        fileterCodeName(codeList, codeName){
+            const list = CODE_HELP_EDIT.METHOD.addSeq(codeList)
+            const result = list.filter((ele)=>{
+                var value1	= ele.codeName.toUpperCase();
+                var value2	= codeName.toUpperCase();
+                var pos		= value1.indexOf(value2);
+                return pos >= 0
+            })
+            if(result.length < 1){
+                return list
+            }
+            return result
+        },
+
+            
+
+    },
+
+    set(args) {
+        /* 
+        .............................................................
+        args = {codeTagId, nameTagId, buttonTagId, codeType, codeList}
+        .............................................................
+        */
+
+        // 필수항목 확인
+        if(!args.codeTagId) return null
+        if(!args.nameTagId) return null
+        if(!args.buttonTagId) return null
+
+        const codeTag = document.getElementById(args.codeTagId)
+        const nameTag = document.getElementById(args.nameTagId)
+        const btnTag  = document.getElementById(args.buttonTagId)
+        
+        // CODE onKeyUp Event
+        codeTag.addEventListener('keyup', async (event) => {
+            nameTag.value = ''
+            const codeList = args.codeList ?? CODE_HELP_EDIT.METHOD.getCodeList(args.codeType)
+            const code = event.target.value
+            const codeLen = code.length
+            const codeMaxLen = CODE_HELP_EDIT.DATA.CODE_TYPES[args.codeType].codeLength
+            const inputKey = event.code
+
+            if(inputKey != 'Enter' & codeLen < codeMaxLen) return
+            
+            const filteredList = CODE_HELP_EDIT.METHOD.fileterCode(codeList, code)
+            if(filteredList.length == 1){
+                codeTag.value = filteredList[0].code
+                nameTag.value = filteredList[0].name
+                args.callback({args:args, button:null, data :filteredList[0]})
+                return
+            }
+            const result = await CODE_HELP_EDIT.DIALOG.open({codeList:filteredList, title:'코드 목록'})
+            codeTag.value = result.data.code
+            nameTag.value = result.data.name
+            args.callback({args:args, button:result.button, data:result.data})
+        })
+        
+        // NAME onKeyUp Event
+        nameTag.addEventListener('keyup', async () => {
+            codeTag.value = ''
+            const codeList = args.codeList ?? CODE_HELP_EDIT.METHOD.getCodeList(args.codeType)
+            const name = event.target.value
+            const inputKey = event.code
+            if(inputKey != 'Enter') return
+            
+            const filteredList = CODE_HELP_EDIT.METHOD.fileterName(codeList, name)
+            if(filteredList.length == 1){
+                codeTag.value = filteredList[0].code
+                nameTag.value = filteredList[0].name
+                args.callback({args:args, button:null, data :filteredList[0]})
+                return
+            }
+            const data = await CODE_HELP_EDIT.DIALOG.open({codeList:filteredList, title:'코드 목록'})
+            codeTag.value = result.data.code
+            nameTag.value = result.data.name
+            args.callback({args:args, button:result.button, data:result.data})
+        });
+        
+        // BUTTON onClick Event
+        btnTag.addEventListener('click', async (event) => {
+            codeTag.value = ''
+            nameTag.value = ''
+            const codeList = args.codeList ?? CODE_HELP_EDIT.METHOD.getCodeList(args.codeType)
+            const data = await CODE_HELP_EDIT.DIALOG.open({codeList:codeList, title:'코드 목록'})
+            codeTag.value = result.data.code
+            nameTag.value = result.data.name
+            args.callback({args:args, button:result.button, data:result.data})
+        });
+
+        return {...args}
+    },
+}
+
+</script>
+<style>
+/*
+=================================================================
+ /src/css/modalPopup.css
+=================================================================
+*/
+.modalBackground {
+    top: 0px;
+    left: 0px;
+    position: fixed;
+    background: rgba(0, 0, 0, 0.5);
+    width: 100%;
+    height: 100%;
+}
+
+.modalBody {
+    background: #f0f8ff;
+    border-radius: 10px;
+    padding: 0px 10px 10px 10px;
+    position: fixed; /* 위치를 고정으로 설정 */
+    top: 50%; /* 상단에서 50% 위치 */
+    left: 50%; /* 좌측에서 50% 위치 */
+    transform: translate(-50%, -50%); /* 중앙 정렬을 위해 50% 이동 */
+}
+
+.modalBody .modalSystemMenu {
+    text-align: right;
+    margin: 0 0 0 0;
+}
+
+.modalBody .modalSystemMenu .systemButton {
+    color: #4169e1;
+    cursor: default;
+}
+
+.modalBody .modalSystemMenu .systemButton:hover {
+    color: #1e90ff;
+    font-weight: bolder;
+}
+
+.modalBody .modalTitle {
+    text-align: center;
+    color: #4169e1;
+    margin: 0px 0px 0px 0px;
+    padding: 0px 10px 0px 10px;
+}
+
+.modalBody .modalContents {
+    text-align: center;
+    color: #4169e1;
+    padding: 10px 10px 10px 10px;
+}
+
+.modalBody .modalGridContainer {
+    width: 400px;
+    height: 500px;
+    padding: 10px 10px 10px 10px;
+}
+
+.modalBody .modalButtonGroup {
+    text-align: center;
+    padding: 0 0 10px 0;
+}
+.modalBody .modalButtonGroup button {
+    background-color: #1e90ff; /* 초기 버튼 색상 */
+    border: none;
+    color: white;
+    padding: 6px 20px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 14px;
+    margin: 4px 5px;
+    cursor: pointer;
+    border-radius: 10px; /* 각진 버튼 스타일 */
+    box-shadow: none; /* 그림자 제거 */
+    transition: background-color 0.3s ease;
+}
+
+.modalBody .modalButtonGroup button:disabled {
+    background-color: #97aef2; /* 비활성화된 버튼의 색상 */
+    cursor: not-allowed; /* 마우스 커서를 not-allowed로 변경 */
+    opacity: 0.6; /* 버튼의 불투명도를 낮춰서 흐린 효과 */
+}
+
+.modalBody .modalButtonGroup button:active {
+    background-color: #96b0fc; /* 버튼 클릭 시 색상 변경 */
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2); /* 버튼 클릭 시 그림자 줄어듦 */
+    transform: translateY(1px); /* 버튼 클릭 시 약간 내려감 */
+}
+
+.modalBody .modalButtonGroup button:hover {
+    background-color: #4169e1; /* 마우스 호버 시 버튼 색상 변경 */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* 마우스 호버 시 그림자 증가 */
+}
+
+.modalBody .modalButtonGroup button:disabled:active {
+    background-color: #97aef2; /* 비활성화된 버튼의 색상 유지 */
+    box-shadow: none; /* 마우스 클릭 시 그림자 효과 제거 */
+    transform: none; /* 마우스 클릭 시 버튼 이동 효과 제거 */
+}
+
+.modalBody .modalButtonGroup button:disabled:hover {
+    background-color: #97aef2; /* 비활성화된 버튼의 색상 유지 */
+    box-shadow: none; /* 마우스 호버 시 그림자 효과 제거 */
+    transform: none; /* 마우스 호버 시 버튼 이동 효과 제거 */
+}
+</style>
